@@ -1,0 +1,33 @@
+HOW to start:
+
+    mvn clean compile assembly:single && java -jar target/mini-game-backend-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+How to stop:
+
+    Ctrl+C
+
+
+The program implements standard MVC pattern to serve concurrently http requests and used in-memory storage for
+data persistence.
+
+ - MVC. Controllers receive requests, routed by Java's HttpServer, to controller methods. Each controller validates
+ the request param, calls certain model to add/fetch data optionally uses view to create formatted string and lastly
+ writes response to HttpServer, which takes over and displays it in the browser. In case of errors, such as validation
+ error, 400/Bad request with empty body is returned.
+
+ - Multithreading. For each request HttpServer creates a separate thread with newCachedThreadPool() ExecutorService.
+ The controllers are static and therefore shared between threads reading and writing to the controller's state. The
+ state is delegated to models and each model in terms delegates concurrency handling to ConcurrentHashMap, which is
+ high performance multithreaded data structure, with minimum blocking and atomic methods. There is only one place in the
+ code where synchronisation is used -- Authenticator's login method -- and this can probably be improved with some
+ clever sequence of atomic method calls, like in ScoreList's add method.
+
+ - Testing. There are both integration tests -- in AppTest -- as well as unit tests in AuthenticatorTest. More tests
+ needs to be added.
+
+ - Data structures. ConcurrentHashMap is used all over mainly for simplicity. In order to support the generation of
+ top score lists ConcurrentSkipListMap can be used instead, so one keeps the scores sorted and does not re-sort them
+ in each method call.
+
+ - Misc. There are various TODOs in the code, describing extensions/improvements. There are no comments since the code
+ is hopefully self-explanatory.
